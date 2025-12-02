@@ -1,4 +1,11 @@
 #!/bin/bash
+# Ubuntu Development Environment Setup
+#
+# Run remotely:
+#   curl -fsSL https://raw.githubusercontent.com/kelomai/kelomai/main/ubuntu-setup/setup.sh | bash
+#
+# Installs: Git, MS Edge, GitKraken, Claude Code, PowerShell, Terraform, psql, Go
+
 set -e
 
 echo "=== Ubuntu Development Environment Setup ==="
