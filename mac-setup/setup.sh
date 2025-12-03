@@ -1025,6 +1025,8 @@ main() {
     done
 
     # Install formulae (CLI tools)
+    # Auto-accept Microsoft EULA for SQL Server tools
+    export HOMEBREW_ACCEPT_EULA=Y
     log_info "Installing CLI tools (${#formulae[@]} formulae)..."
     for formula in "${formulae[@]}"; do
         if $DRY_RUN; then
