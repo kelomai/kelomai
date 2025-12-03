@@ -69,7 +69,6 @@
       "gh",
       "curl",
       "wget",
-      "jq",
       "tree",
       "watch",
       "htop",

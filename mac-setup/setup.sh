@@ -341,29 +341,30 @@ EOF
 install_mlx() {
     log_info "Installing MLX (Apple's native ML framework)..."
 
-    # Ensure we're using Homebrew Python, not system Python
-    local python_path
-    if [[ $(uname -m) == 'arm64' ]]; then
-        python_path="/opt/homebrew/bin/python3"
-    else
-        python_path="/usr/local/bin/python3"
+    # Use pipx to install mlx-lm (includes mlx as dependency)
+    # pipx creates isolated environments, avoiding PEP 668 restrictions
+    if ! command -v pipx &>/dev/null; then
+        log_warn "pipx not installed, skipping MLX"
+        return
     fi
 
-    if ! command -v "$python_path" &>/dev/null; then
-        python_path="python3"
+    # Check if mlx_lm is already installed via pipx
+    if pipx list | grep -q "mlx-lm"; then
+        log_success "mlx-lm already installed via pipx"
+    else
+        log_info "Installing mlx-lm via pipx (includes MLX framework)..."
+        pipx install mlx-lm || log_warn "Failed to install mlx-lm"
     fi
 
-    # Install MLX and MLX-LM via pip
-    if "$python_path" -c "import mlx" 2>/dev/null; then
-        log_success "MLX already installed"
-    else
-        log_info "Installing MLX framework..."
-        "$python_path" -m pip install --upgrade mlx mlx-lm huggingface_hub || log_warn "Failed to install MLX"
+    # Also install huggingface-cli for downloading models
+    if ! command -v huggingface-cli &>/dev/null; then
+        log_info "Installing huggingface-cli..."
+        pipx install huggingface_hub || log_warn "Failed to install huggingface_hub"
     fi
 
     # Verify installation
-    if "$python_path" -c "import mlx; print(f'MLX version: {mlx.__version__}')" 2>/dev/null; then
-        log_success "MLX installed successfully"
+    if command -v mlx_lm.generate &>/dev/null; then
+        log_success "MLX-LM installed successfully"
     fi
 }
 
