@@ -427,7 +427,15 @@ install_llama_cpp() {
 # Open WebUI - ChatGPT-like web interface for Ollama
 install_open_webui() {
     if ! command -v docker &>/dev/null; then
-        log_warn "Docker not available, skipping Open WebUI"
+        log_warn "Docker not installed, skipping Open WebUI"
+        return
+    fi
+
+    # Check if Docker daemon is running
+    if ! docker info &>/dev/null; then
+        log_warn "Docker Desktop not running. Please start Docker Desktop and try again."
+        log_info "You can install Open WebUI later with:"
+        echo "  docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
         return
     fi
 
