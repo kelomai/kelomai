@@ -462,37 +462,33 @@ setup_ollama_models() {
     echo ""
     log_info "With 96GB unified memory, you can run large models!"
     echo ""
-    echo "RECOMMENDED MODELS:"
-    echo ""
-    echo "  Coding Models:"
-    echo "    ollama pull qwen2.5-coder:32b      # Best coding model for your RAM (18GB)"
-    echo "    ollama pull deepseek-coder-v2:16b  # Fast, excellent code completion (9GB)"
-    echo "    ollama pull codellama:34b          # Meta's code model (19GB)"
-    echo ""
-    echo "  General Purpose:"
-    echo "    ollama pull llama3.3:70b-instruct-q4_K_M  # Most capable Llama (40GB)"
-    echo "    ollama pull qwen2.5:32b            # Excellent general model (18GB)"
-    echo "    ollama pull mixtral:8x7b           # Fast mixture-of-experts (26GB)"
-    echo ""
-    echo "  Fast/Small (for quick tasks):"
-    echo "    ollama pull llama3.2:3b            # Very fast, 2GB"
-    echo "    ollama pull qwen2.5-coder:7b       # Good balance, 4GB"
-    echo ""
-    echo "  Specialized:"
-    echo "    ollama pull nomic-embed-text       # Embeddings for RAG (274MB)"
-    echo "    ollama pull llava:34b              # Vision model (19GB)"
+    echo "AVAILABLE MODELS (from manifest):"
     echo ""
 
-    read -p "Pull recommended starter pack? (qwen2.5-coder:32b + llama3.2:3b) [y/N]: " -n 1 -r
+    # Display models from manifest by category
+    for category in coding general fast specialized; do
+        echo "  ${category^} Models:"
+        echo "$PACKAGES_JSON" | jq -r ".ollama_models.$category[]?" 2>/dev/null | while read -r model; do
+            [[ -z "$model" ]] && continue
+            echo "    ollama pull $model"
+        done
+        echo ""
+    done
+
+    # Get default models from manifest
+    local default_models
+    default_models=$(echo "$PACKAGES_JSON" | jq -r '.ollama_models.default[]?' 2>/dev/null | tr '\n' ' ')
+
+    read -p "Pull default models? ($default_models) [y/N]: " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Pulling llama3.2:3b (fast model)..."
-        ollama pull llama3.2:3b
+        while IFS= read -r model; do
+            [[ -z "$model" ]] && continue
+            log_info "Pulling $model..."
+            ollama pull "$model" || log_warn "Failed to pull $model"
+        done < <(echo "$PACKAGES_JSON" | jq -r '.ollama_models.default[]?' 2>/dev/null)
 
-        log_info "Pulling qwen2.5-coder:32b (primary coding model - this will take a while)..."
-        ollama pull qwen2.5-coder:32b
-
-        log_success "Models ready! Run: ollama run qwen2.5-coder:32b"
+        log_success "Models ready! Run: ollama run <model>"
     fi
 }
 
@@ -527,21 +523,16 @@ setup_python() {
     if command -v pipx &>/dev/null; then
         pipx ensurepath
 
-        # Install essential Python CLI tools via pipx
-        local python_tools=(
-            poetry                  # Dependency management
-            httpie                  # HTTP client
-            litellm                 # LLM API proxy
-        )
-
-        for tool in "${python_tools[@]}"; do
+        # Install Python CLI tools via pipx from manifest
+        while IFS= read -r tool; do
+            [[ -z "$tool" ]] && continue
             if ! pipx list | grep -q "$tool"; then
                 log_info "Installing $tool via pipx..."
                 pipx install "$tool" || log_warn "Failed to install $tool"
             else
                 log_success "$tool already installed"
             fi
-        done
+        done < <(get_packages "pipx_packages")
     fi
 
     # Setup pyenv if installed
@@ -648,27 +639,24 @@ install_oh_my_zsh() {
 }
 
 install_zsh_plugins() {
-    log_info "Installing zsh plugins..."
+    log_info "Installing zsh plugins from manifest..."
 
     local zsh_custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 
-    # zsh-autosuggestions
-    if [ ! -d "$zsh_custom/plugins/zsh-autosuggestions" ]; then
-        git clone https://github.com/zsh-users/zsh-autosuggestions "$zsh_custom/plugins/zsh-autosuggestions" 2>/dev/null
-        log_success "Installed zsh-autosuggestions"
-    fi
+    # Install plugins from manifest (format: "owner/repo")
+    while IFS= read -r plugin; do
+        [[ -z "$plugin" ]] && continue
+        local plugin_name="${plugin##*/}"  # Extract repo name from "owner/repo"
+        local plugin_dir="$zsh_custom/plugins/$plugin_name"
 
-    # zsh-syntax-highlighting
-    if [ ! -d "$zsh_custom/plugins/zsh-syntax-highlighting" ]; then
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting "$zsh_custom/plugins/zsh-syntax-highlighting" 2>/dev/null
-        log_success "Installed zsh-syntax-highlighting"
-    fi
-
-    # zsh-completions
-    if [ ! -d "$zsh_custom/plugins/zsh-completions" ]; then
-        git clone https://github.com/zsh-users/zsh-completions "$zsh_custom/plugins/zsh-completions" 2>/dev/null
-        log_success "Installed zsh-completions"
-    fi
+        if [ ! -d "$plugin_dir" ]; then
+            log_info "Installing $plugin_name..."
+            git clone "https://github.com/$plugin" "$plugin_dir" 2>/dev/null
+            log_success "Installed $plugin_name"
+        else
+            log_success "$plugin_name already installed"
+        fi
+    done < <(get_packages "zsh_plugins")
 }
 
 configure_zsh() {
