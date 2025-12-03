@@ -156,6 +156,8 @@ install_homebrew() {
 taps=(
     hashicorp/tap
     jandedobbeleer/oh-my-posh
+    microsoft/mssql-release         # SQL Server ODBC driver and tools
+    azure/azd                       # Azure Developer CLI
 )
 
 # =============================================================================
@@ -177,6 +179,7 @@ casks=(
     warp                            # Modern terminal
 
     # --- AI/LLM Tools ---
+    ollama                          # Local LLM inference engine
     lm-studio                       # Local LLM GUI - model explorer
     jan                             # Privacy-focused local LLM chat
     chatgpt                         # OpenAI ChatGPT desktop
@@ -192,8 +195,7 @@ casks=(
     # --- Microsoft/Azure ---
     powershell
     microsoft-azure-storage-explorer
-    microsoft-office                # Word, Excel, PowerPoint, Outlook
-    onedrive                        # Cloud storage
+    microsoft-office                # Word, Excel, PowerPoint, Outlook, OneDrive
 
     # --- Productivity ---
     notion                          # Notes and docs
@@ -258,13 +260,12 @@ formulae=(
     # --- Azure ---
     azure-cli
     azcopy
-    azd
+    azure/azd/azd                           # Azure Developer CLI
 
     # --- Database ---
-    postgresql@14
-    sqlcmd
-    msodbcsql18
-    mssql-tools18
+    postgresql@16
+    microsoft/mssql-release/msodbcsql18     # SQL Server ODBC driver
+    microsoft/mssql-release/mssql-tools18   # sqlcmd and bcp
 
     # --- Network Tools ---
     tcping
@@ -465,12 +466,14 @@ setup_mlx_models() {
 
 # Ollama - Primary LLM runtime with OpenAI-compatible API
 install_ollama() {
-    if ! command -v ollama &>/dev/null; then
-        log_info "Installing Ollama (local LLM inference engine)..."
-        curl -fsSL https://ollama.com/install.sh | sh
-        log_success "Ollama installed"
+    if command -v ollama &>/dev/null; then
+        log_success "Ollama already installed: $(ollama --version 2>/dev/null || echo 'version unknown')"
+    elif brew list --cask ollama &>/dev/null; then
+        log_success "Ollama cask installed (may need to launch app first)"
     else
-        log_success "Ollama already installed: $(ollama --version)"
+        log_info "Installing Ollama via Homebrew..."
+        brew install --cask ollama
+        log_success "Ollama installed"
     fi
 }
 

@@ -35,7 +35,7 @@ curl -fsSL https://raw.githubusercontent.com/kelomai/kelomai/main/mac-setup/setu
 | **Containers** | Docker Desktop |
 | **LLM/AI Tools** | LM Studio, Jan, ChatGPT, Claude |
 | **Communication** | Slack, Signal, Telegram, WhatsApp |
-| **Microsoft/Azure** | PowerShell, Azure Storage Explorer, Office 365, OneDrive |
+| **Microsoft/Azure** | PowerShell, Azure Storage Explorer, Office 365 (includes OneDrive) |
 | **Productivity** | 1Password CLI, Adobe Acrobat Pro, Spotify, Snagit, Raycast, Notion |
 | **Hardware** | DisplayLink drivers, Elgato Stream Deck |
 | **Fonts** | Fira Code Nerd Font, Meslo LG Nerd Font, JetBrains Mono Nerd Font |
@@ -64,7 +64,7 @@ curl -fsSL https://raw.githubusercontent.com/kelomai/kelomai/main/mac-setup/setu
 | **IaC** | Terraform, Terraform-docs, Packer |
 | **Kubernetes** | kubectl, kubelogin |
 | **Azure** | azure-cli, azcopy, azd |
-| **Database** | PostgreSQL 14, sqlcmd, msodbcsql18 |
+| **Database** | PostgreSQL 16, sqlcmd, msodbcsql18 |
 | **Network** | tcping, unbound |
 | **Shell** | oh-my-posh |
 
