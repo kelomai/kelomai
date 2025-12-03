@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Mac Development Workstation Package Manifest",
+
+  "taps": [
+    "hashicorp/tap",
+    "jandedobbeleer/oh-my-posh",
+    "microsoft/mssql-release",
+    "azure/azd"
+  ],
+
+  "casks": {
+    "browsers": [
+      "firefox",
+      "google-chrome",
+      "microsoft-edge"
+    ],
+    "development": [
+      "visual-studio-code",
+      "github",
+      "gitkraken",
+      "gitkraken-cli",
+      "docker-desktop",
+      "beyond-compare",
+      "warp"
+    ],
+    "ai_llm": [
+      "ollama",
+      "lm-studio",
+      "jan",
+      "chatgpt",
+      "claude",
+      "claude-code"
+    ],
+    "communication": [
+      "slack",
+      "signal",
+      "telegram",
+      "whatsapp"
+    ],
+    "microsoft_azure": [
+      "powershell",
+      "microsoft-azure-storage-explorer",
+      "microsoft-office"
+    ],
+    "productivity": [
+      "notion",
+      "1password-cli",
+      "adobe-acrobat-pro",
+      "spotify",
+      "snagit",
+      "raycast"
+    ],
+    "hardware": [
+      "displaylink",
+      "elgato-stream-deck"
+    ],
+    "fonts": [
+      "font-fira-code-nerd-font",
+      "font-meslo-lg-nerd-font",
+      "font-jetbrains-mono-nerd-font"
+    ]
+  },
+
+  "formulae": {
+    "core": [
+      "mas",
+      "git",
+      "gh",
+      "curl",
+      "wget",
+      "jq",
+      "tree",
+      "watch",
+      "htop",
+      "ncurses"
+    ],
+    "languages": [
+      "python@3.13",
+      "node",
+      "go",
+      "dotnet",
+      "dotnet-sdk",
+      "openjdk@21"
+    ],
+    "version_managers": [
+      "pyenv",
+      "nvm"
+    ],
+    "python": [
+      "pipx"
+    ],
+    "iac": [
+      "terraform",
+      "terraform-docs",
+      "packer"
+    ],
+    "kubernetes": [
+      "kubectl",
+      "kubelogin"
+    ],
+    "azure": [
+      "azure-cli",
+      "azcopy",
+      "azure/azd/azd"
+    ],
+    "database": [
+      "postgresql@16",
+      "microsoft/mssql-release/msodbcsql18",
+      "microsoft/mssql-release/mssql-tools18"
+    ],
+    "network": [
+      "tcping",
+      "unbound"
+    ],
+    "shell": [
+      "oh-my-posh"
+    ],
+    "utilities": [
+      "graphviz",
+      "xz",
+      "zstd"
+    ]
+  },
+
+  "mas_apps": {
+    "497799835": "Xcode",
+    "1451685025": "WireGuard",
+    "441258766": "Magnet",
+    "1480933944": "Vimari",
+    "937984704": "Amphetamine",
+    "1352778147": "Bitwarden",
+    "1339170533": "CleanMyMac X",
+    "967805235": "Paste",
+    "1500855883": "CapCut"
+  },
+
+  "edge_extensions": {
+    "odfafepnkmbhccpbejgmiehpchacaeak": "uBlock Origin",
+    "hokifickgkhplphjiodbggjmoafhignh": "React Developer Tools",
+    "fmkadmapgofadopljbjfkapdkoienihi": "JSON Formatter",
+    "nhdogjmejiglipccpnnnanhbledajbpd": "Vue.js devtools",
+    "lmhkpmbekcpmknklioeibfkpmmfibljd": "Redux DevTools",
+    "gppongmhjkpfnbhagpmjfkondtafpam": "GitHub Copilot"
+  },
+
+  "vscode_extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-azuretools.vscode-docker",
+    "hashicorp.terraform",
+    "github.copilot",
+    "github.copilot-chat",
+    "continue.continue",
+    "ms-dotnettools.csharp",
+    "golang.go",
+    "esbenp.prettier-vscode",
+    "eamodio.gitlens"
+  ]
+}

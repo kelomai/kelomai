@@ -93,6 +93,93 @@ log_info "Starting Mac Development Workstation Setup..."
 log_info "Architecture: $(uname -m)"
 
 # =============================================================================
+# PACKAGE MANIFEST
+# =============================================================================
+GITHUB_RAW_BASE="https://raw.githubusercontent.com/kelomai/kelomai/main"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null || pwd)"
+PACKAGES_JSON=""
+
+# Bootstrap jq - must be installed before we can parse the manifest
+bootstrap_jq() {
+    if command -v jq &>/dev/null; then
+        log_success "jq already installed"
+        return 0
+    fi
+
+    if $DRY_RUN; then
+        log_info "[DRY RUN] Would install jq for JSON parsing"
+        return 0
+    fi
+
+    log_info "Installing jq (required for package manifest)..."
+    brew install jq || {
+        log_error "Failed to install jq - cannot parse package manifest"
+        exit 1
+    }
+    log_success "jq installed"
+}
+
+# Load package manifest from local file or GitHub
+load_packages() {
+    # Try local file first (for local execution)
+    if [[ -f "$SCRIPT_DIR/packages.json" ]]; then
+        PACKAGES_JSON=$(cat "$SCRIPT_DIR/packages.json")
+        log_success "Loaded packages.json from local file"
+        return 0
+    fi
+
+    # Try current directory
+    if [[ -f "./packages.json" ]]; then
+        PACKAGES_JSON=$(cat "./packages.json")
+        log_success "Loaded packages.json from current directory"
+        return 0
+    fi
+
+    if $DRY_RUN; then
+        log_info "[DRY RUN] Would download packages.json from GitHub"
+        return 0
+    fi
+
+    # Download from GitHub
+    log_info "Downloading packages.json from GitHub..."
+    PACKAGES_JSON=$(curl -fsSL "$GITHUB_RAW_BASE/mac-setup/packages.json") || {
+        log_error "Failed to download packages.json"
+        exit 1
+    }
+    log_success "Downloaded packages.json from GitHub"
+}
+
+# Helper to get flat array of packages from nested JSON categories
+get_packages() {
+    local section="$1"
+    if [[ -z "$PACKAGES_JSON" ]]; then
+        echo ""
+        return
+    fi
+    # Flatten nested objects into a simple array
+    echo "$PACKAGES_JSON" | jq -r "
+        .$section |
+        if type == \"object\" then
+            [.[] | if type == \"array\" then .[] else . end] | .[]
+        elif type == \"array\" then
+            .[]
+        else
+            empty
+        end
+    " 2>/dev/null
+}
+
+# Helper to get key-value pairs (for mas_apps, edge_extensions)
+get_package_map() {
+    local section="$1"
+    if [[ -z "$PACKAGES_JSON" ]]; then
+        echo ""
+        return
+    fi
+    echo "$PACKAGES_JSON" | jq -r ".$section | to_entries | .[] | \"\(.key)|\(.value)\"" 2>/dev/null
+}
+
+# =============================================================================
 # HOMEBREW INSTALLATION
 # =============================================================================
 install_homebrew() {
@@ -168,169 +255,6 @@ install_homebrew() {
 }
 
 # =============================================================================
-# HOMEBREW TAPS
-# =============================================================================
-taps=(
-    hashicorp/tap
-    jandedobbeleer/oh-my-posh
-    microsoft/mssql-release         # SQL Server ODBC driver and tools
-    azure/azd                       # Azure Developer CLI
-)
-
-# =============================================================================
-# GUI APPLICATIONS (Casks)
-# =============================================================================
-casks=(
-    # --- Browsers ---
-    firefox
-    google-chrome
-    microsoft-edge
-
-    # --- Development Tools ---
-    visual-studio-code
-    github                          # GitHub Desktop
-    gitkraken                       # Git GUI
-    gitkraken-cli
-    docker-desktop                  # Containers
-    beyond-compare                  # File comparison
-    warp                            # Modern terminal
-
-    # --- AI/LLM Tools ---
-    ollama                          # Local LLM inference engine
-    lm-studio                       # Local LLM GUI - model explorer
-    jan                             # Privacy-focused local LLM chat
-    chatgpt                         # OpenAI ChatGPT desktop
-    claude                          # Anthropic Claude desktop
-    claude-code                     # Claude Code CLI
-
-    # --- Communication ---
-    slack                           # Team communication
-    signal                          # Encrypted messaging
-    telegram                        # Messaging
-    whatsapp                        # Messaging
-
-    # --- Microsoft/Azure ---
-    powershell
-    microsoft-azure-storage-explorer
-    microsoft-office                # Word, Excel, PowerPoint, Outlook, OneDrive
-
-    # --- Productivity ---
-    notion                          # Notes and docs
-    1password-cli
-    adobe-acrobat-pro
-    spotify
-    snagit                          # Screenshots
-    raycast                         # Spotlight replacement (optional)
-
-    # --- Hardware Support ---
-    displaylink                     # DisplayLink drivers
-    elgato-stream-deck              # Stream Deck
-
-    # --- Fonts ---
-    font-fira-code-nerd-font
-    font-meslo-lg-nerd-font
-    font-jetbrains-mono-nerd-font
-)
-
-# =============================================================================
-# CLI TOOLS (Formulae)
-# =============================================================================
-formulae=(
-    # --- Mac App Store CLI ---
-    mas                             # Install App Store apps via CLI
-
-    # --- Core Development ---
-    git
-    gh                              # GitHub CLI
-    curl
-    wget
-    jq                              # JSON processor
-    tree
-    watch
-    htop
-    ncurses
-
-    # --- Languages & Runtimes ---
-    python@3.13
-    node
-    go
-    dotnet
-    dotnet-sdk
-    openjdk@21
-
-    # --- Version Managers (better than managing manually) ---
-    pyenv                           # Python version manager
-    nvm                             # Node version manager
-
-    # --- Python Development ---
-    pipx                            # Install Python apps in isolated envs
-
-    # --- Infrastructure as Code ---
-    terraform
-    terraform-docs
-    packer
-
-    # --- Kubernetes & Containers ---
-    kubectl
-    kubelogin
-
-    # --- Azure ---
-    azure-cli
-    azcopy
-    azure/azd/azd                           # Azure Developer CLI
-
-    # --- Database ---
-    postgresql@16
-    microsoft/mssql-release/msodbcsql18     # SQL Server ODBC driver
-    microsoft/mssql-release/mssql-tools18   # sqlcmd and bcp
-
-    # --- Network Tools ---
-    tcping
-    unbound
-
-    # --- Shell & Terminal ---
-    oh-my-posh                      # Prompt theme engine
-
-    # --- Utilities ---
-    graphviz                        # Graph visualization
-    xz
-    zstd
-)
-
-# =============================================================================
-# MAC APP STORE APPS (requires: mas CLI + signed into App Store)
-# Find app IDs: https://github.com/mas-cli/mas or search "app name site:apps.apple.com"
-# =============================================================================
-mas_apps=(
-    "497799835"     # Xcode
-    "1451685025"    # WireGuard
-    "441258766"     # Magnet (window manager)
-    "1480933944"    # Vimari (Safari vim keybindings)
-    "937984704"     # Amphetamine (keep Mac awake)
-    "1352778147"    # Bitwarden (if using instead of 1Password)
-    "1339170533"    # CleanMyMac X
-    "967805235"     # Paste - Clipboard Manager
-    "1500855883"    # CapCut - Video Editor
-    # "408981434"   # iMovie
-    # "409183694"   # Keynote
-    # "409201541"   # Pages
-    # "409203825"   # Numbers
-)
-
-# =============================================================================
-# EDGE EXTENSIONS (installed via policy/preferences)
-# Find extension IDs from Edge Add-ons store URL
-# =============================================================================
-edge_extensions=(
-    "odfafepnkmbhccpbejgmiehpchacaeak"  # uBlock Origin
-    "hokifickgkhplphjiodbggjmoafhignh"  # React Developer Tools
-    "fmkadmapgofadopljbjfkapdkoienihi"  # JSON Formatter
-    "nhdogjmejiglipccpnnnanhbledajbpd"  # Vue.js devtools
-    "lmhkpmbekcpmknklioeibfkpmmfibljd"  # Redux DevTools
-    "gppongmhjkpfnbhagpmjfkondtafpam"   # GitHub Copilot
-)
-
-# =============================================================================
 # MAC APP STORE INSTALLATION
 # =============================================================================
 install_mas_apps() {
@@ -347,17 +271,15 @@ install_mas_apps() {
     fi
 
     log_info "Installing Mac App Store apps..."
-    for app_id in "${mas_apps[@]}"; do
-        # Skip commented entries
-        [[ "$app_id" =~ ^# ]] && continue
-
+    while IFS='|' read -r app_id app_name; do
+        [[ -z "$app_id" ]] && continue
         if mas list | grep -q "^$app_id"; then
-            log_success "App $app_id already installed"
+            log_success "$app_name ($app_id) already installed"
         else
-            log_info "Installing App Store app: $app_id"
-            mas install "$app_id" || log_warn "Failed to install app $app_id"
+            log_info "Installing $app_name ($app_id)..."
+            mas install "$app_id" || log_warn "Failed to install $app_name"
         fi
-    done
+    done < <(get_package_map "mas_apps")
 }
 
 # =============================================================================
@@ -372,21 +294,14 @@ install_edge_extensions() {
     # Create directory if needed
     mkdir -p "$edge_plist_dir"
 
-    # Build extension list for policy
-    local extensions_json="["
-    local first=true
-    for ext_id in "${edge_extensions[@]}"; do
-        if [ "$first" = true ]; then
-            first=false
-        else
-            extensions_json+=","
-        fi
-        extensions_json+="\"$ext_id\""
-    done
-    extensions_json+="]"
+    # Build plist content from manifest
+    local plist_entries=""
+    while IFS='|' read -r ext_id ext_name; do
+        [[ -z "$ext_id" ]] && continue
+        plist_entries+="        <string>${ext_id}</string>\n"
+    done < <(get_package_map "edge_extensions")
 
     # Create/update Edge preferences plist
-    # Note: This sets extensions to be force-installed
     cat > "/tmp/edge_extensions.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -394,8 +309,7 @@ install_edge_extensions() {
 <dict>
     <key>ExtensionInstallForcelist</key>
     <array>
-$(for ext_id in "${edge_extensions[@]}"; do echo "        <string>${ext_id}</string>"; done)
-    </array>
+$(echo -e "$plist_entries")    </array>
 </dict>
 </plist>
 EOF
@@ -411,9 +325,10 @@ EOF
 
     echo ""
     log_info "Edge extensions will be installed on next Edge launch:"
-    for ext_id in "${edge_extensions[@]}"; do
-        echo "  - $ext_id"
-    done
+    while IFS='|' read -r ext_id ext_name; do
+        [[ -z "$ext_id" ]] && continue
+        echo "  - $ext_name ($ext_id)"
+    done < <(get_package_map "edge_extensions")
     echo ""
     log_info "Or install manually from: edge://extensions"
 }
@@ -648,8 +563,6 @@ EOF
 # =============================================================================
 # SHELL CONFIGURATION (oh-my-posh for pwsh and zsh)
 # =============================================================================
-GITHUB_RAW_BASE="https://raw.githubusercontent.com/kelomai/kelomai/main"
-
 configure_powershell() {
     log_info "Configuring PowerShell with oh-my-posh..."
 
@@ -968,23 +881,10 @@ install_vscode_extensions() {
     if command -v code &>/dev/null; then
         log_info "Installing VS Code extensions..."
 
-        local extensions=(
-            ms-python.python
-            ms-python.vscode-pylance
-            ms-azuretools.vscode-docker
-            hashicorp.terraform
-            github.copilot
-            github.copilot-chat
-            continue.continue              # Local LLM integration
-            ms-dotnettools.csharp
-            golang.go
-            esbenp.prettier-vscode
-            eamodio.gitlens
-        )
-
-        for ext in "${extensions[@]}"; do
+        while IFS= read -r ext; do
+            [[ -z "$ext" ]] && continue
             code --install-extension "$ext" --force 2>/dev/null || log_warn "Failed to install $ext"
-        done
+        done < <(get_packages "vscode_extensions")
 
         log_success "VS Code extensions installed"
     else
@@ -1019,19 +919,27 @@ main() {
     # Install Homebrew first
     install_homebrew
 
-    # Add taps
+    # Bootstrap jq (required to parse packages.json)
+    bootstrap_jq
+
+    # Load package manifest
+    load_packages
+
+    # Add taps from manifest
     log_info "Adding Homebrew taps..."
-    for tap in "${taps[@]}"; do
+    while IFS= read -r tap; do
+        [[ -z "$tap" ]] && continue
         if $DRY_RUN; then
             log_info "[DRY RUN] Would tap: $tap"
         else
             brew tap "$tap" 2>/dev/null || true
         fi
-    done
+    done < <(get_packages "taps")
 
-    # Install casks (GUI apps)
-    log_info "Installing GUI applications (${#casks[@]} casks)..."
-    for cask in "${casks[@]}"; do
+    # Install casks (GUI apps) from manifest
+    log_info "Installing GUI applications..."
+    while IFS= read -r cask; do
+        [[ -z "$cask" ]] && continue
         if $DRY_RUN; then
             log_info "[DRY RUN] Would install cask: $cask"
         elif brew list --cask "$cask" &>/dev/null; then
@@ -1039,28 +947,40 @@ main() {
         else
             brew install --cask "$cask" || log_warn "Failed to install $cask"
         fi
-    done
+    done < <(get_packages "casks")
 
-    # Install formulae (CLI tools)
+    # Install formulae (CLI tools) from manifest
     # Auto-accept Microsoft EULA for SQL Server tools
     export HOMEBREW_ACCEPT_EULA=Y
-    log_info "Installing CLI tools (${#formulae[@]} formulae)..."
-    for formula in "${formulae[@]}"; do
+    log_info "Installing CLI tools..."
+
+    # Unlink conflicting sqlcmd if present (conflicts with mssql-tools18)
+    if brew list sqlcmd &>/dev/null 2>&1; then
+        log_info "Unlinking sqlcmd (conflicts with mssql-tools18)..."
+        brew unlink sqlcmd 2>/dev/null || true
+    fi
+
+    while IFS= read -r formula; do
+        [[ -z "$formula" ]] && continue
         if $DRY_RUN; then
             log_info "[DRY RUN] Would install formula: $formula"
         elif brew list "$formula" &>/dev/null; then
             log_success "$formula already installed"
         else
-            brew install "$formula" || log_warn "Failed to install $formula"
+            # Handle mssql-tools18 link conflict
+            if [[ "$formula" == *"mssql-tools18"* ]]; then
+                brew install "$formula" && brew link --overwrite "$formula" 2>/dev/null || log_warn "Failed to install $formula"
+            else
+                brew install "$formula" || log_warn "Failed to install $formula"
+            fi
         fi
-    done
+    done < <(get_packages "formulae")
 
     # Install Mac App Store apps
     if $SKIP_MAS; then
         log_info "Skipping Mac App Store apps (--skip-mas flag)"
     elif $DRY_RUN; then
         log_info "[DRY RUN] Would prompt: Install Mac App Store apps?"
-        log_info "[DRY RUN] Would install ${#mas_apps[@]} App Store apps"
     else
         read -p "Install Mac App Store apps (requires App Store sign-in)? [y/N]: " -n 1 -r
         echo
