@@ -818,33 +818,6 @@ EOF
     echo "  + zsh-autosuggestions, zsh-syntax-highlighting, zsh-completions"
 }
 
-configure_shells() {
-    log_info "Configuring shell prompts..."
-
-    # Check if oh-my-posh is installed
-    if ! command -v oh-my-posh &>/dev/null; then
-        log_warn "oh-my-posh not installed, skipping shell configuration"
-        return
-    fi
-
-    configure_zsh
-
-    # Only configure PowerShell if installed
-    if command -v pwsh &>/dev/null; then
-        configure_powershell
-    else
-        log_info "PowerShell not installed, skipping pwsh configuration"
-    fi
-
-    log_success "Shell configuration complete!"
-    echo ""
-    echo "Theme downloaded to: ~/.config/oh-my-posh/kelomai.omp.json"
-    echo "Restart your terminal or run: source ~/.zshrc"
-}
-
-# =============================================================================
-# MACOS DEVELOPER SETTINGS
-# =============================================================================
 configure_terminal_font() {
     log_info "Configuring Terminal.app font..."
 
@@ -875,6 +848,36 @@ EOF
     log_info "Restart Terminal.app for changes to take effect"
 }
 
+configure_shells() {
+    log_info "Configuring shell prompts..."
+
+    # Check if oh-my-posh is installed
+    if ! command -v oh-my-posh &>/dev/null; then
+        log_warn "oh-my-posh not installed, skipping shell configuration"
+        return
+    fi
+
+    configure_zsh
+
+    # Only configure PowerShell if installed
+    if command -v pwsh &>/dev/null; then
+        configure_powershell
+    else
+        log_info "PowerShell not installed, skipping pwsh configuration"
+    fi
+
+    # Configure terminal font for Nerd Font icons
+    configure_terminal_font
+
+    log_success "Shell configuration complete!"
+    echo ""
+    echo "Theme downloaded to: ~/.config/oh-my-posh/kelomai.omp.json"
+    echo "Restart your terminal or run: source ~/.zshrc"
+}
+
+# =============================================================================
+# MACOS DEVELOPER SETTINGS
+# =============================================================================
 configure_macos() {
     log_info "Configuring macOS developer settings..."
 
@@ -896,9 +899,6 @@ configure_macos() {
 
     # Enable developer menu in Safari
     defaults write com.apple.Safari IncludeDevelopMenu -bool true
-
-    # Configure Terminal.app font for Nerd Font
-    configure_terminal_font
 
     log_success "macOS settings configured (restart Finder to apply)"
 }
