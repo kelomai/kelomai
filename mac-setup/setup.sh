@@ -114,13 +114,40 @@ install_homebrew() {
             eval "$(/usr/local/bin/brew shellenv)"
             log_success "Homebrew installed at /usr/local (Intel)"
         fi
-    else
-        log_success "Homebrew already installed at $(which brew)"
+        return  # Fresh install, no need to update
     fi
 
-    if $DRY_RUN; then return; fi
-    log_info "Updating Homebrew..."
-    brew update
+    log_success "Homebrew already installed at $(which brew)"
+
+    if $DRY_RUN; then
+        log_info "[DRY RUN] Would check if Homebrew needs updating"
+        return
+    fi
+
+    # Check when Homebrew was last updated (look at .git FETCH_HEAD timestamp)
+    local brew_repo
+    if [[ $(uname -m) == 'arm64' ]]; then
+        brew_repo="/opt/homebrew"
+    else
+        brew_repo="/usr/local/Homebrew"
+    fi
+
+    local last_update=0
+    local fetch_head="$brew_repo/.git/FETCH_HEAD"
+    if [[ -f "$fetch_head" ]]; then
+        last_update=$(stat -f %m "$fetch_head" 2>/dev/null || echo 0)
+    fi
+
+    local now
+    now=$(date +%s)
+    local age_hours=$(( (now - last_update) / 3600 ))
+
+    if [[ $age_hours -gt 24 ]]; then
+        log_info "Homebrew last updated ${age_hours} hours ago, updating..."
+        brew update
+    else
+        log_success "Homebrew updated recently (${age_hours} hours ago), skipping update"
+    fi
 }
 
 # =============================================================================
