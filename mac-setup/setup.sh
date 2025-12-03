@@ -484,7 +484,7 @@ setup_ollama_models() {
     local default_models
     default_models=$(echo "$PACKAGES_JSON" | jq -r '.ollama_models.default[]?' 2>/dev/null | tr '\n' ' ')
 
-    read -p "Pull default models? ($default_models) [y/N]: " -n 1 -r
+    read -p "Pull default models? ($default_models) [y/N]: " -n 1 -r < /dev/tty
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         while IFS= read -r model; do
@@ -507,7 +507,7 @@ setup_local_llm_stack() {
     install_mlx
 
     # Optional: Open WebUI
-    read -p "Install Open WebUI (ChatGPT-like web interface)? [y/N]: " -n 1 -r
+    read -p "Install Open WebUI (ChatGPT-like web interface)? [y/N]: " -n 1 -r < /dev/tty
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         install_open_webui
@@ -978,7 +978,7 @@ main() {
     elif $DRY_RUN; then
         log_info "[DRY RUN] Would prompt: Install Mac App Store apps?"
     else
-        read -p "Install Mac App Store apps (requires App Store sign-in)? [y/N]: " -n 1 -r
+        read -p "Install Mac App Store apps (requires App Store sign-in)? [y/N]: " -n 1 -r < /dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             install_mas_apps
@@ -1005,7 +1005,7 @@ main() {
     if $DRY_RUN; then
         log_info "[DRY RUN] Would prompt: Configure macOS developer settings?"
     else
-        read -p "Configure macOS developer settings? [y/N]: " -n 1 -r
+        read -p "Configure macOS developer settings? [y/N]: " -n 1 -r < /dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             configure_macos
@@ -1019,7 +1019,7 @@ main() {
         log_info "[DRY RUN] Would download oh-my-posh theme from GitHub"
         log_info "[DRY RUN] Would create ~/.zshrc and PowerShell profile"
     else
-        read -p "Configure shell prompts (zsh + pwsh with oh-my-posh)? [y/N]: " -n 1 -r
+        read -p "Configure shell prompts (zsh + pwsh with oh-my-posh)? [y/N]: " -n 1 -r < /dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             configure_shells
@@ -1030,7 +1030,7 @@ main() {
     if $DRY_RUN; then
         log_info "[DRY RUN] Would prompt: Install VS Code extensions?"
     else
-        read -p "Install VS Code extensions? [y/N]: " -n 1 -r
+        read -p "Install VS Code extensions? [y/N]: " -n 1 -r < /dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             install_vscode_extensions
@@ -1041,7 +1041,7 @@ main() {
     if $DRY_RUN; then
         log_info "[DRY RUN] Would prompt: Configure Edge extensions?"
     else
-        read -p "Configure Microsoft Edge extensions? [y/N]: " -n 1 -r
+        read -p "Configure Microsoft Edge extensions? [y/N]: " -n 1 -r < /dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             install_edge_extensions
