@@ -348,6 +348,10 @@ install_mlx() {
         return
     fi
 
+    # Ensure pipx bin directory is in PATH for this session
+    export PATH="$HOME/.local/bin:$PATH"
+    pipx ensurepath &>/dev/null || true
+
     # Check if mlx_lm is already installed via pipx
     if pipx list | grep -q "mlx-lm"; then
         log_success "mlx-lm already installed via pipx"
@@ -784,6 +788,9 @@ bindkey '^R' history-incremental-search-backward
 # -----------------------------------------------------------------------------
 export EDITOR="code --wait"
 export VISUAL="code --wait"
+
+# pipx (Python CLI tools)
+export PATH="$HOME/.local/bin:$PATH"
 
 # Python
 export PYENV_ROOT="$HOME/.pyenv"
