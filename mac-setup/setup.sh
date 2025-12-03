@@ -932,6 +932,14 @@ main() {
         echo "  Shell Configuration Only"
         echo "============================================="
         echo ""
+
+        # Need to load manifest for zsh plugins
+        if command -v jq &>/dev/null; then
+            load_packages
+        else
+            log_warn "jq not installed - zsh plugins from manifest won't be installed"
+        fi
+
         configure_shells
         echo ""
         log_success "Shell configuration complete!"
