@@ -96,7 +96,24 @@ log_info "Architecture: $(uname -m)"
 # HOMEBREW INSTALLATION
 # =============================================================================
 install_homebrew() {
-    if ! command -v brew &>/dev/null; then
+    # Determine Homebrew path based on architecture
+    local brew_bin
+    if [[ $(uname -m) == 'arm64' ]]; then
+        brew_bin="/opt/homebrew/bin/brew"
+    else
+        brew_bin="/usr/local/bin/brew"
+    fi
+
+    # Check if Homebrew binary exists (may not be in PATH yet)
+    if [[ -x "$brew_bin" ]]; then
+        # Homebrew exists but may not be in PATH - add it for this session
+        if ! command -v brew &>/dev/null; then
+            log_info "Homebrew found at $brew_bin, adding to PATH..."
+            eval "$($brew_bin shellenv)"
+        fi
+        log_success "Homebrew already installed at $brew_bin"
+    elif ! command -v brew &>/dev/null; then
+        # Homebrew not installed
         if $DRY_RUN; then
             log_info "[DRY RUN] Would install Homebrew"
             return
@@ -115,9 +132,9 @@ install_homebrew() {
             log_success "Homebrew installed at /usr/local (Intel)"
         fi
         return  # Fresh install, no need to update
+    else
+        log_success "Homebrew already installed at $(which brew)"
     fi
-
-    log_success "Homebrew already installed at $(which brew)"
 
     if $DRY_RUN; then
         log_info "[DRY RUN] Would check if Homebrew needs updating"
