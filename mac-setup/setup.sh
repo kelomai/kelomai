@@ -845,6 +845,36 @@ configure_shells() {
 # =============================================================================
 # MACOS DEVELOPER SETTINGS
 # =============================================================================
+configure_terminal_font() {
+    log_info "Configuring Terminal.app font..."
+
+    # Check if MesloLGS Nerd Font is installed
+    if ! fc-list | grep -qi "MesloLG.*Nerd"; then
+        log_warn "Nerd Font not found, skipping Terminal.app font configuration"
+        return
+    fi
+
+    # Create a custom terminal profile with Nerd Font
+    # Using MesloLGS NF which is commonly used with oh-my-posh/powerlevel10k
+    local font_name="MesloLGS Nerd Font"
+    local font_size="14"
+
+    # Set font for the default profile
+    osascript <<EOF
+tell application "Terminal"
+    set font name of settings set "Basic" to "$font_name"
+    set font size of settings set "Basic" to $font_size
+end tell
+EOF
+
+    # Also try to set for current default profile via defaults
+    defaults write com.apple.Terminal "Default Window Settings" -string "Basic"
+    defaults write com.apple.Terminal "Startup Window Settings" -string "Basic"
+
+    log_success "Terminal.app configured with $font_name ($font_size pt)"
+    log_info "Restart Terminal.app for changes to take effect"
+}
+
 configure_macos() {
     log_info "Configuring macOS developer settings..."
 
@@ -866,6 +896,9 @@ configure_macos() {
 
     # Enable developer menu in Safari
     defaults write com.apple.Safari IncludeDevelopMenu -bool true
+
+    # Configure Terminal.app font for Nerd Font
+    configure_terminal_font
 
     log_success "macOS settings configured (restart Finder to apply)"
 }
